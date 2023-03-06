@@ -3,6 +3,7 @@
 
 
 #include "connection_socket.h"
+#include <atomic>
 
 namespace network
 {

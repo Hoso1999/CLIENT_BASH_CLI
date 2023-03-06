@@ -94,14 +94,14 @@ namespace network
         auto read_line = []( int fd )
         {
             std::string line;
-            char        buffer[100];
+            char        buffer[BUFFER_SIZE];
 
-            bzero(buffer, 100);
+            bzero(buffer, BUFFER_SIZE);
 
-            while ( !std::strstr(buffer, "\n") )
+            while ( !std::strstr(buffer, "\r") )
             {
-                bzero(buffer, 100);
-                if ( recv(fd, buffer, 99, 0) < 0)
+                bzero(buffer, BUFFER_SIZE);
+                if ( recv(fd, buffer, BUFFER_SIZE - 1, 0) < 0)
                     if (errno != EWOULDBLOCK)
                         throw std::runtime_error("Client not connected to server");
                 line.append(buffer);
@@ -120,9 +120,9 @@ namespace network
 
         auto client = m_clients.at(fd);
 
-        char message[1000];
+        char message[BUFFER_SIZE];
         
-        bzero(message, 1000);
+        bzero(message, BUFFER_SIZE);
         sprintf( message, "%s:%d has disconnected.", client->get_host().c_str(), client->get_port() );
         log(message);
 
@@ -157,9 +157,9 @@ namespace network
             std::shared_ptr<client> new_client( new client( fd, hostname, ntohs( s_address.sin_port ) ) );
             m_clients.insert( std::make_pair( fd, new_client ) );
 
-            char message[1000];
+            char message[BUFFER_SIZE];
 
-            bzero(message, 1000);
+            bzero(message, BUFFER_SIZE);
             sprintf( message, "%s:%d has connected.", new_client->get_host().c_str(), new_client->get_port() );
             log(message);
         }
@@ -195,17 +195,17 @@ namespace network
     {
         std::time_t rawtime;
         struct tm *timeinfo;
-        char buffer[80];
+        char buffer[BUFFER_SIZE];
 
         std::time(&rawtime);
         timeinfo = std::localtime(&rawtime);
 
-        bzero(buffer, 80);
-        std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", timeinfo);
+        bzero(buffer, BUFFER_SIZE);
+        std::strftime(buffer, sizeof(buffer) - 1, "%d-%m-%Y %H:%M:%S", timeinfo);
         std::string str(buffer);
         std::cout << "[" << str << "] " << message << std::flush << std::endl;
-        sync();
     }
+
 }
 
 

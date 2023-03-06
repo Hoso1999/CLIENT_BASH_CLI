@@ -33,9 +33,25 @@ namespace network
 
     void client::reply( const std::string& message ) const
     {
-        std::string buffer = message + "\r\n";
-        if ( ::send( m_fd, buffer.c_str(), buffer.length(), 0 ) < 0 )
-            throw std::runtime_error("Client not connected to server");
+
+        auto all_bytes = message.size();
+        char        buffer[BUFFER_SIZE];
+
+        bzero(buffer, BUFFER_SIZE);
+
+        std::string msg = message + "\r\n";
+        int bytes = 0;
+        int sended_bytes = 0;
+        while ( bytes < all_bytes )
+        {
+            bzero(buffer, BUFFER_SIZE);
+            int n = sprintf( buffer, "%.*s", BUFFER_SIZE - sended_bytes, msg.c_str() );
+            msg.erase(0, BUFFER_SIZE - 1);
+            sended_bytes = ::send( m_fd, buffer, BUFFER_SIZE - sended_bytes, 0 );
+            if ( sended_bytes < 0 )
+                throw std::runtime_error("Client not connected to server");
+            bytes += sended_bytes;
+        }
 
     }
 

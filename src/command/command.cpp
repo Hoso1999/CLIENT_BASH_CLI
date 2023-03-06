@@ -54,22 +54,27 @@ namespace command
     void shell::execute( std::shared_ptr<network::client> client, const argument_list& arguments, bool& connected )
     {
 
+        //std::cout << "shell$> execute" << std::endl;
         auto send_line = [&connected]( int fd, std::string msg )
         {
             if ( connected )
             {
                 auto all_bytes = msg.size();
-                char        buffer[100];
+                char        buffer[BUFFER_SIZE];
 
-                bzero(buffer, 100);
+                bzero(buffer, BUFFER_SIZE);
 
-                while ( msg.size() )
+                int bytes = 0;
+                int sended_bytes = 0;
+                while ( bytes < all_bytes )
                 {
-                    bzero(buffer, 100);
-                    int n = sprintf(buffer, "%.*s", 99, msg.c_str());
-                    msg.erase(0, 99);
-                    if ( send(fd, buffer, 99, 0) < 0)
+                    bzero(buffer, BUFFER_SIZE);
+                    int n = sprintf( buffer, "%.*s", BUFFER_SIZE - sended_bytes, msg.c_str() );
+                    msg.erase(0, BUFFER_SIZE - 1);
+                    sended_bytes = send( fd, buffer, BUFFER_SIZE - sended_bytes, 0 );
+                    if ( sended_bytes < 0 )
                         throw std::runtime_error("Cannot send data to server");
+                    bytes += sended_bytes;
                 }
             }
         };
@@ -78,33 +83,27 @@ namespace command
         std::string command;
         for (auto& arg : arguments)
             command += arg + std::string(" ");
-        std::mutex mutex;
-        std::thread t(
-        [&]()
+        command += "2>&1";
+        FILE* pipe;
+        char buffer[BUFFER_SIZE];
+
+        // Execute the command and get the output
+        pipe = popen( command.c_str(), "r" );
+        if ( !pipe )
+            throw std::runtime_error("Error while execute shell command");
+
+        std::string output;
+        // Read the output from the command
+        bzero(buffer, BUFFER_SIZE);
+        while ( fgets( buffer, BUFFER_SIZE - 1, pipe ) )
         {
-            std::lock_guard<std::mutex> m(mutex);
-            FILE* pipe;
-            char buffer[100];
+            output.append(buffer);
+            bzero(buffer, BUFFER_SIZE);
+        }
+        pclose( pipe );
 
-            // Execute the command and get the output
-            pipe = popen( command.c_str(), "r" );
-            if ( !pipe )
-                throw std::runtime_error("Error while execute shell command");
-
-            std::string output;
-            // Read the output from the command
-            bzero(buffer, 100);
-            while ( fgets( buffer, 99, pipe ) )
-            {
-                output.append(buffer);
-                bzero(buffer, 100);
-            }
-            pclose( pipe );
-            send_line( client->get_fd(), output );
-
-        });
-        t.join();
-
+        output += "\r";
+        send_line( client->get_fd(), output );
     }
 
     connect::connect( std::shared_ptr<network::connection_socket> server )

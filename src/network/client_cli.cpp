@@ -2,8 +2,6 @@
 #include "client_cli.h"
 #include "client_command_handler.h"
 #include "client.h"
-#include <thread>
-#include <atomic>
 
 
 namespace network
@@ -20,12 +18,8 @@ namespace network
     client_cli::client_cli( std::string&& port, std::string&& host  )
         :   connection_socket( std::move( port ), std::move( host ) )
     {
+        m_socket = create_socket();
 
-        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-        if ( sockfd < 0 )
-            throw std::runtime_error("Cannot open socket.");
-        m_socket = sockfd;
     }
 
     int client_cli::create_socket()
@@ -81,7 +75,8 @@ namespace network
 
     void        client_cli::get_disconnection( int fd )
     {
-        close(fd);
+        if (fd > 0)
+            close(fd);
     }
 
     void client_cli::run() 
@@ -106,8 +101,7 @@ namespace network
         if ( getsockname( m_socket, (struct sockaddr*) &curr_client_addr, &addr_len ) < 0)
             throw std::runtime_error("Cannot get currect port");
         m_current = ( std::shared_ptr<client>(new client( m_socket, m_host, ntohs(curr_client_addr.sin_port) ) ) );
-        if (fcntl(m_socket, F_SETFL, O_NONBLOCK) < 0)
-            throw std::runtime_error("Cannot set F_SETFL flag");
+
         while ( true )
         {
 
@@ -119,18 +113,14 @@ namespace network
                     m_connected = false;
                 else
                     m_connected = true;
-                
+            
                 command::command_handler::get_handler<command::client_command_handler>( get_server() )->invoke(m_current, read_line(), m_connected);
-
             }
             catch ( const std::exception& ex )
             {
                 log( ex.what() );
             }
         }
-
-        //FD_CLR(m_socket, &write_fds);
-        //FD_CLR(m_socket, &read_fds);
     }
 
 }

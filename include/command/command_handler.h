@@ -5,6 +5,7 @@
 #include "client.h"
 #include "server.h"
 #include "connection_socket.h"
+#include <atomic>
 
 
 namespace command
@@ -52,7 +53,7 @@ namespace command
                     }
                     catch ( const std::out_of_range& )
                     {
-                        client->reply( std::string("Command ") + cmd + std::string(" not supported") );
+                        client->reply( std::string("Command \"") + cmd + std::string("\" not supported") );
                     }
                     catch ( const std::exception& ex )
                     {

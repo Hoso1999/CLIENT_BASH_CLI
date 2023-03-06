@@ -27,6 +27,11 @@
 #endif
 #define MAX_CONNECTIONS 5
 
+#ifdef BUFFER_SIZE
+#undef BUFFER_SIZE
+#endif
+#define BUFFER_SIZE 1024
+
 namespace network
 {
     class   client;

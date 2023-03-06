@@ -21,17 +21,22 @@ namespace command
         {
             if ( connected )
             {
-                char        buffer[100];
+                char        buffer[BUFFER_SIZE];
 
-                bzero(buffer, 100);
+                bzero(buffer, BUFFER_SIZE);
 
-                while ( msg.size() )
+                auto line_size = msg.size();
+
+                int bytes = 0;
+                while ( bytes < line_size )
                 {
-                    bzero(buffer, 100);
-                    int n = sprintf(buffer, "%.*s", 99, msg.c_str());
-                    msg.erase(0, 99);
-                    if ( send(fd, buffer, 99, 0) < 0)
+                    bzero(buffer, BUFFER_SIZE);
+                    int n = sprintf(buffer, "%.*s", BUFFER_SIZE - 1, msg.c_str());
+                    msg.erase(0, BUFFER_SIZE - 1);
+                    auto send_bytes = send(fd, buffer, BUFFER_SIZE - 1, 0 );
+                    if ( send_bytes < 0 )
                         throw std::runtime_error("Cannot send data to server");
+                    bytes += send_bytes;
                 }
             }
         };
@@ -41,24 +46,25 @@ namespace command
             std::string line;
             if ( connected )
             {
-                char buffer[100];
+                char buffer[BUFFER_SIZE];
 
-                bzero( buffer, 100 );
+                bzero( buffer, BUFFER_SIZE );
 
-                while ( !std::strstr(buffer, "\n") )
+                while ( !strstr(buffer, "\r") )
                 {
-                    bzero( buffer, 100 );
-                    ssize_t num_read = recv( fd, buffer, 99, 0 );
+                    bzero( buffer, BUFFER_SIZE );
+                    ssize_t num_read = recv( fd, buffer, BUFFER_SIZE - 1, 0 );
                     if ( num_read < 0 )
                     {
                         if (errno != EWOULDBLOCK )
                             std::runtime_error("Cannot recieve data from server");
+                        break;
                     }
                     else if ( num_read == 0 )
                     {
                         // Connection closed by the server
-                        std::cout << ("Server closed the connection");
                         connected = false;
+                        throw std::runtime_error("Server closed the connection");
                     }
                     else
                         line.append(buffer);
@@ -95,7 +101,6 @@ namespace command
                 send_line( client->get_fd(), message );
                 auto recieved_msg = get_line( client->get_fd() );
                 std::cout << recieved_msg;
-                sync();
             }
             catch ( const std::exception& ex )
             {
