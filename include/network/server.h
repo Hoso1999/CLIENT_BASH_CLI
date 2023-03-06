@@ -2,7 +2,7 @@
 #define SERVER_H
 
 #include "application.h"
-#include "command_handler.h"
+#include "connection_socket.h"
 #include "client.h"
 
 namespace network
@@ -11,7 +11,7 @@ namespace network
      *  
      *  server side structure
      */
-    class server
+    class server : public connection_socket
     {
         /*
          * containers for store clients and poll file descriptors
@@ -24,43 +24,32 @@ namespace network
         typedef pollfd_map::iterator                pollfd_iterator;
         typedef client_map::iterator                client_iterator;
 
-        const std::string                           m_port;
-        const std::string                           m_host;
-        int                                         m_socket;
         client_map                                  m_clients;
         pollfd_map                                  m_pollfds;
-        std::shared_ptr<command::command_handler>   m_command_handler;
 
-        server( const std::string& /* port */ );
-        server( std::string&& /* port */ );
         
-        int     create_socket();
-        void    get_connection();
-        void    get_command( int /* fd */ );
+        void            get_connection();
+        void            get_command( int /* fd */ );
 
 
         public:
 
+            server() = delete;
             server( server&  /* other */ ) = delete;
             server( server&& /* other */ ) = delete;
             server& operator=( server&& /* other */ ) = delete;
             server& operator=( server& /* other */ ) = delete;
-            static std::shared_ptr<server>  get_server( const std::string& /* port */ );
-            static std::shared_ptr<server>  get_server( std::string&& /* port */ );
-            void                            get_disconnection( int /* fd */ );
-            void                            run();
-            virtual ~server();
-
+            static std::shared_ptr<connection_socket>  get_server( const std::string& /* port */, const std::string& /* host */ = "127.0.0.1" );
+            virtual void    get_disconnection( int /* fd */ ) override;
+            virtual void    run() override;
         protected:
-            static server*  m_server;
 
+            server( const std::string& /* port */, const std::string& /* host */ = "127.0.0.1" );
+            server( std::string&& /* port */, std::string&& /* host */ = "127.0.0.1" );
 
+            virtual int         create_socket() override;
     };
     
-    /*
-     * function for print messages for server and client
-    */
-    void log(const std::string& /* message */ );
 
 }
 
