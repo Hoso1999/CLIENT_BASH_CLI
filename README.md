@@ -29,6 +29,6 @@ disconnect
 shell <COMMAND>
 ```
 
-# bugs
+# Bugs
 Shell command not works if command waits to stdin
 
