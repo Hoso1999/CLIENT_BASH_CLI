@@ -36,7 +36,6 @@ namespace command
                 return sharedInstance;
             }
             using command_handler::invoke;
-            //void invoke( std::shared_ptr<network::client> /* client */, const std::string& /* message */ ) override;
     };
 
 }
