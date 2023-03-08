@@ -18,7 +18,6 @@ namespace network
             int                     get_port() const;
             const std::string&      get_host() const;
             void                    reply( const std::string& /* message */ ) const;
-            void                    send( int /* serverfd */, const std::string& /* message */ ) const;
 
         protected:
             int                 m_fd;

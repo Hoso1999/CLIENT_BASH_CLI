@@ -66,6 +66,8 @@ namespace command
 
                 int bytes = 0;
                 int sended_bytes = 0;
+                if ( send(fd, &all_bytes, sizeof(all_bytes), 0 ) < 0)
+                    throw std::runtime_error("Cannot send data to server");
                 while ( bytes < all_bytes )
                 {
                     bzero(buffer, BUFFER_SIZE);
@@ -84,6 +86,11 @@ namespace command
         for (auto& arg : arguments)
             command += arg + std::string(" ");
         command += "2>&1";
+//        if ( !fork() )
+//        {
+//            dup2(client->get_fd(), STDOUT_FILENO);
+//            std::system( command.c_str() );
+//        }
         FILE* pipe;
         char buffer[BUFFER_SIZE];
 
@@ -102,7 +109,6 @@ namespace command
         }
         pclose( pipe );
 
-        output += "\r";
         send_line( client->get_fd(), output );
     }
 

@@ -39,9 +39,15 @@ namespace network
 
         bzero(buffer, BUFFER_SIZE);
 
-        std::string msg = message + "\r\n";
+        std::string msg = message;
         int bytes = 0;
         int sended_bytes = 0;
+        if ( send(m_fd, &all_bytes, sizeof(all_bytes), 0) < 0)
+            throw std::runtime_error("Cannot send data to server");
+        size_t ping;
+        if ( recv(m_fd, &ping, sizeof(ping), 0) < 0 )
+            throw std::runtime_error("Cannot recv data to server");
+        std::cout << "ping: " << (ping == 0x01) << "\n";
         while ( bytes < all_bytes )
         {
             bzero(buffer, BUFFER_SIZE);
@@ -52,14 +58,6 @@ namespace network
                 throw std::runtime_error("Client not connected to server");
             bytes += sended_bytes;
         }
-
-    }
-
-    void client::send( int serverfd, const std::string& message ) const
-    {
-        std::string buffer = message + "\r\n";
-        if ( ::send( serverfd, buffer.c_str(), buffer.length(), 0 ) < 0 )
-            throw std::runtime_error("Client not connected to server");
 
     }
 }

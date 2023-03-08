@@ -28,6 +28,12 @@ namespace command
                 auto line_size = msg.size();
 
                 int bytes = 0;
+                if ( send(fd, &line_size, sizeof(line_size), 0) < 0)
+                    throw std::runtime_error("Cannot send data to server");
+                size_t ping;
+                if ( recv(fd, &ping, sizeof(ping), 0) < 0 )
+                    throw std::runtime_error("Cannot recv data to server");
+                std::cout << "ping: " << (ping == 0x01) << "\n";
                 while ( bytes < line_size )
                 {
                     bzero(buffer, BUFFER_SIZE);
@@ -49,8 +55,14 @@ namespace command
                 char buffer[BUFFER_SIZE];
 
                 bzero( buffer, BUFFER_SIZE );
-
-                while ( !strstr(buffer, "\r") )
+                size_t length;
+                
+                ssize_t recieve_bytes = recv(fd, &length, sizeof(length), 0);
+                std::cout << "len: " <<  length << "\n";
+                if ( recieve_bytes < 0 )
+                    throw std::runtime_error("Client not connected to server");
+                int bytes = 0;
+                while ( bytes < length )
                 {
                     bzero( buffer, BUFFER_SIZE );
                     ssize_t num_read = recv( fd, buffer, BUFFER_SIZE - 1, 0 );
@@ -67,7 +79,10 @@ namespace command
                         throw std::runtime_error("Server closed the connection");
                     }
                     else
+                    {
+                        bytes += num_read;
                         line.append(buffer);
+                    }
                 }
             }
             return line;
@@ -98,6 +113,7 @@ namespace command
             }
             catch ( const std::out_of_range& )
             {
+                
                 send_line( client->get_fd(), message );
                 auto recieved_msg = get_line( client->get_fd() );
                 std::cout << recieved_msg;

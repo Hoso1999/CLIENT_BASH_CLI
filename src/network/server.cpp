@@ -61,10 +61,12 @@ namespace network
         log("Server running...");
         while ( true )
         {
-            if ( poll( m_pollfds.begin().base(), m_pollfds.size(), -1 ) < 0 )
+            int status = poll( m_pollfds.begin().base(), m_pollfds.size(), -1 );
+            if ( status < 0 )
                 throw std::runtime_error("Cannot poll from fd.");
             for ( auto& curr_poll : m_pollfds )
             {
+
                 if ( !curr_poll.revents )
                     continue;
                 
@@ -97,14 +99,26 @@ namespace network
             char        buffer[BUFFER_SIZE];
 
             bzero(buffer, BUFFER_SIZE);
+            int recieve_bytes = 0;
+            size_t length;
 
-            while ( !std::strstr(buffer, "\r") )
+            recieve_bytes = recv(fd, &length, sizeof(length), 0);
+            std::cout << "length: " << length << "\n";
+            if ( recieve_bytes < 0 )
+                throw std::runtime_error("Client not connected to server");
+            size_t x = 0x01;
+            if ( send(fd, &x, sizeof(x), 0)  < 0)
+                throw std::runtime_error("Client not connected to server");
+            int bytes = 0;
+            while ( bytes < length )
             {
                 bzero(buffer, BUFFER_SIZE);
-                if ( recv(fd, buffer, BUFFER_SIZE - 1, 0) < 0)
+                ssize_t r_bytes = recv(fd, buffer, BUFFER_SIZE - 1, 0);
+                if ( r_bytes < 0)
                     if (errno != EWOULDBLOCK)
                         throw std::runtime_error("Client not connected to server");
-                line.append(buffer);
+                bytes += r_bytes;
+                line.append(buffer, buffer );
             }
             return line;
         };

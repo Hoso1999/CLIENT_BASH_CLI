@@ -87,7 +87,7 @@ namespace network
             std::getline(std::cin, line);
             if ( std::cin.eof() )
                 throw "eof";
-            return line + "\r\n";
+            return line;
         };
 
 
