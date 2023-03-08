@@ -59,6 +59,10 @@ namespace network
     }
 
 
+    int client_cli::get_fd() const
+    {
+        return m_socket;
+    }
     std::shared_ptr<connection_socket>  client_cli::get_server( const std::string& port, const std::string& host )
     {
         static std::weak_ptr<connection_socket> weakInstance;

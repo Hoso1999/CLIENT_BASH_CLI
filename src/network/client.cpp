@@ -44,16 +44,12 @@ namespace network
         int sended_bytes = 0;
         if ( send(m_fd, &all_bytes, sizeof(all_bytes), 0) < 0)
             throw std::runtime_error("Cannot send data to server");
-        size_t ping;
-        if ( recv(m_fd, &ping, sizeof(ping), 0) < 0 )
-            throw std::runtime_error("Cannot recv data to server");
-        std::cout << "ping: " << (ping == 0x01) << "\n";
         while ( bytes < all_bytes )
         {
             bzero(buffer, BUFFER_SIZE);
-            int n = sprintf( buffer, "%.*s", BUFFER_SIZE - sended_bytes, msg.c_str() );
-            msg.erase(0, BUFFER_SIZE - 1);
-            sended_bytes = ::send( m_fd, buffer, BUFFER_SIZE - sended_bytes, 0 );
+            int n = sprintf( buffer, "%.*s", BUFFER_SIZE - sended_bytes - 1, msg.c_str() );
+            msg.erase(0, BUFFER_SIZE - sended_bytes - 1);
+            sended_bytes = ::send( m_fd, buffer, BUFFER_SIZE - sended_bytes - 1, 0 );
             if ( sended_bytes < 0 )
                 throw std::runtime_error("Client not connected to server");
             bytes += sended_bytes;

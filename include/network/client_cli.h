@@ -26,6 +26,7 @@ namespace network
             void                                       connect( const std::string& /* port */, const std::string& /* host */ ) override;
             static std::shared_ptr<connection_socket>  get_server( const std::string& /* port */ = "", const std::string& /* host */ = "" );
             void                                       run() override;
+            int                                        get_fd() const override;
 
         protected:
             int                                        create_socket() override;

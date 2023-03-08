@@ -1,5 +1,7 @@
 #include "server.h"
 #include "server_command_handler.h"
+#include <thread>
+#include <mutex>
 
 
 namespace network
@@ -53,6 +55,10 @@ namespace network
         return -1;
     }
 
+    int server::get_fd() const
+    {
+        return m_socket;
+    }
     void    server::run()
     {
         pollfd server_fd = {m_socket, POLLIN, 0};
@@ -93,22 +99,18 @@ namespace network
     {
         auto client = m_clients.at(fd);
 
-        auto read_line = []( int fd )
+        int recieve_bytes = 0;
+        size_t length;
+
+        recieve_bytes = recv(fd, &length, sizeof(length), 0);
+        if ( recieve_bytes < 0 )
+            throw std::runtime_error("Client not connected to server");
+        auto read_line = [&]( int fd )
         {
             std::string line;
             char        buffer[BUFFER_SIZE];
 
             bzero(buffer, BUFFER_SIZE);
-            int recieve_bytes = 0;
-            size_t length;
-
-            recieve_bytes = recv(fd, &length, sizeof(length), 0);
-            std::cout << "length: " << length << "\n";
-            if ( recieve_bytes < 0 )
-                throw std::runtime_error("Client not connected to server");
-            size_t x = 0x01;
-            if ( send(fd, &x, sizeof(x), 0)  < 0)
-                throw std::runtime_error("Client not connected to server");
             int bytes = 0;
             while ( bytes < length )
             {
@@ -118,7 +120,7 @@ namespace network
                     if (errno != EWOULDBLOCK)
                         throw std::runtime_error("Client not connected to server");
                 bytes += r_bytes;
-                line.append(buffer, buffer );
+                line.append(buffer);
             }
             return line;
         };

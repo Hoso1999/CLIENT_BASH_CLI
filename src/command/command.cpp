@@ -1,7 +1,5 @@
 #include "command.h"
 #include <fstream>
-#include <thread>
-#include <mutex>
 #include <stdio.h>
 
 namespace command
@@ -54,12 +52,11 @@ namespace command
     void shell::execute( std::shared_ptr<network::client> client, const argument_list& arguments, bool& connected )
     {
 
-        //std::cout << "shell$> execute" << std::endl;
         auto send_line = [&connected]( int fd, std::string msg )
         {
             if ( connected )
             {
-                auto all_bytes = msg.size();
+                size_t      all_bytes = msg.size();
                 char        buffer[BUFFER_SIZE];
 
                 bzero(buffer, BUFFER_SIZE);
@@ -71,9 +68,9 @@ namespace command
                 while ( bytes < all_bytes )
                 {
                     bzero(buffer, BUFFER_SIZE);
-                    int n = sprintf( buffer, "%.*s", BUFFER_SIZE - sended_bytes, msg.c_str() );
-                    msg.erase(0, BUFFER_SIZE - 1);
-                    sended_bytes = send( fd, buffer, BUFFER_SIZE - sended_bytes, 0 );
+                    int n = sprintf( buffer, "%.*s", BUFFER_SIZE - sended_bytes - 1, msg.c_str() );
+                    msg.erase(0, BUFFER_SIZE - sended_bytes - 1);
+                    sended_bytes = send( fd, buffer, BUFFER_SIZE - sended_bytes - 1, 0 );
                     if ( sended_bytes < 0 )
                         throw std::runtime_error("Cannot send data to server");
                     bytes += sended_bytes;
@@ -86,30 +83,39 @@ namespace command
         for (auto& arg : arguments)
             command += arg + std::string(" ");
         command += "2>&1";
-//        if ( !fork() )
-//        {
-//            dup2(client->get_fd(), STDOUT_FILENO);
-//            std::system( command.c_str() );
-//        }
-        FILE* pipe;
-        char buffer[BUFFER_SIZE];
-
-        // Execute the command and get the output
-        pipe = popen( command.c_str(), "r" );
-        if ( !pipe )
-            throw std::runtime_error("Error while execute shell command");
-
-        std::string output;
-        // Read the output from the command
-        bzero(buffer, BUFFER_SIZE);
-        while ( fgets( buffer, BUFFER_SIZE - 1, pipe ) )
+        /*
+         * now server and client not blocking if shell command use stdin
+         * TODO find way that can use client stdin for these commands
+        */
+        int pid = fork();
+        if ( !pid )
         {
-            output.append(buffer);
-            bzero(buffer, BUFFER_SIZE);
-        }
-        pclose( pipe );
+            dup2(client->get_fd(), STDIN_FILENO);
+            FILE* pipe;
+            char buffer[BUFFER_SIZE];
 
-        send_line( client->get_fd(), output );
+            // Execute the command and get the output
+            pipe = popen( command.c_str(), "r" );
+            if ( !pipe )
+                throw std::runtime_error("Error while execute shell command");
+
+            std::string output;
+            // Read the output from the command
+            bzero(buffer, BUFFER_SIZE);
+            while ( fgets( buffer, BUFFER_SIZE - 1, pipe ) )
+            {
+                output.append(buffer);
+                bzero(buffer, BUFFER_SIZE);
+            }
+            pclose( pipe );
+
+            send_line( client->get_fd(), output );
+            close( client->get_fd() );
+            exit(0);
+
+        }
+        wait(0);
+        
     }
 
     connect::connect( std::shared_ptr<network::connection_socket> server )

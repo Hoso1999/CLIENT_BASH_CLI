@@ -42,6 +42,7 @@ namespace network
             static std::shared_ptr<connection_socket>  get_server( const std::string& /* port */, const std::string& /* host */ = "127.0.0.1" );
             virtual void    get_disconnection( int /* fd */ ) override;
             virtual void    run() override;
+            int             get_fd() const override;
         protected:
 
             server( const std::string& /* port */, const std::string& /* host */ = "127.0.0.1" );

@@ -24,22 +24,16 @@ namespace command
                 char        buffer[BUFFER_SIZE];
 
                 bzero(buffer, BUFFER_SIZE);
-
                 auto line_size = msg.size();
 
                 int bytes = 0;
-                if ( send(fd, &line_size, sizeof(line_size), 0) < 0)
-                    throw std::runtime_error("Cannot send data to server");
-                size_t ping;
-                if ( recv(fd, &ping, sizeof(ping), 0) < 0 )
-                    throw std::runtime_error("Cannot recv data to server");
-                std::cout << "ping: " << (ping == 0x01) << "\n";
+                int send_bytes = 0;
                 while ( bytes < line_size )
                 {
                     bzero(buffer, BUFFER_SIZE);
-                    int n = sprintf(buffer, "%.*s", BUFFER_SIZE - 1, msg.c_str());
-                    msg.erase(0, BUFFER_SIZE - 1);
-                    auto send_bytes = send(fd, buffer, BUFFER_SIZE - 1, 0 );
+                    int n = sprintf(buffer, "%.*s", BUFFER_SIZE - send_bytes - 1, msg.c_str());
+                    msg.erase(0, BUFFER_SIZE - send_bytes - 1);
+                    send_bytes = send(fd, buffer, BUFFER_SIZE - send_bytes - 1, 0 );
                     if ( send_bytes < 0 )
                         throw std::runtime_error("Cannot send data to server");
                     bytes += send_bytes;
@@ -58,7 +52,6 @@ namespace command
                 size_t length;
                 
                 ssize_t recieve_bytes = recv(fd, &length, sizeof(length), 0);
-                std::cout << "len: " <<  length << "\n";
                 if ( recieve_bytes < 0 )
                     throw std::runtime_error("Client not connected to server");
                 int bytes = 0;
@@ -95,7 +88,7 @@ namespace command
 
         while ( std::getline( ssMessage, line) )
         {
-            line = line.substr(0, line[ line.length() - 1 ] == '\r' ? line.length() - 1 : line.length() );
+            line = line.substr(0, line.length() );
 
             std::string cmd = line.substr(0, line.find(' ') );
             try
@@ -113,7 +106,9 @@ namespace command
             }
             catch ( const std::out_of_range& )
             {
-                
+                size_t size = message.size();
+                if ( send(client->get_fd(), &size, sizeof(size), 0) < 0)
+                    throw std::runtime_error("Cannot send data to server");
                 send_line( client->get_fd(), message );
                 auto recieved_msg = get_line( client->get_fd() );
                 std::cout << recieved_msg;

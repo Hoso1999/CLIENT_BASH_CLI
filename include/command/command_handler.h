@@ -37,11 +37,14 @@ namespace command
 
                 while ( std::getline( ssMessage, line ) )
                 {
-                    line = line.substr(0, line[ line.length() - 1 ] == '\r' ? line.length() - 1 : line.length() );
+                    line = line.substr(0, line.length() );
 
                     std::string cmd = line.substr(0, line.find(' ') );
                     try
                     {
+                        /*
+                         * get command by command name
+                        */
                         decltype(auto) curr_command = m_commands.at(cmd);
                         std::vector<std::string> arguments;
                         std::string arg;
@@ -53,7 +56,7 @@ namespace command
                     }
                     catch ( const std::out_of_range& )
                     {
-                        client->reply( std::string("Command \"") + cmd + std::string("\" not supported") );
+                        client->reply( std::string("Command \"") + cmd + std::string("\" not supported\n") );
                     }
                     catch ( const std::exception& ex )
                     {

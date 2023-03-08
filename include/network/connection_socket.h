@@ -22,6 +22,7 @@ namespace network
             virtual void    get_disconnection( int /* fd */ );
             virtual void    run() = 0;
             virtual void    connect( const std::string& /* port */, const std::string& /* host */ );
+            virtual int     get_fd() const = 0;
 
         protected:
 
