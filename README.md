@@ -30,5 +30,5 @@ shell <COMMAND>
 ```
 
 # Bugs
-Shell command not works if command waits to stdin
+The shell command will send an error if the command expects standard input
 
