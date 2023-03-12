@@ -17,7 +17,14 @@ namespace network
             int                     get_fd() const;
             int                     get_port() const;
             const std::string&      get_host() const;
-            void                    reply( const std::string& /* message */ ) const;
+            /*
+             * function for send data to server or client
+            */
+            void                    reply( const std::string& /* message */, bool& /* connected */ ) const;
+            /*
+             * function for get data from server
+            */
+            std::string             recieve( bool& /* connected */ ) const;
 
         protected:
             int                 m_fd;

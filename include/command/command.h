@@ -57,6 +57,14 @@ namespace command
             void execute( std::shared_ptr<network::client> /* client */, const argument_list& /* arguments */, bool& /* connected */ ) final;
     };
 
+    class cli_shell : public command
+    {
+        public:
+            cli_shell( std::shared_ptr<network::connection_socket> /* server */ );
+            void validate( std::shared_ptr<network::client> /* client */, const argument_list& /* arguments */ ) final;
+            void execute( std::shared_ptr<network::client> /* client */, const argument_list& /* arguments */, bool& /* connected */ ) final;
+    };
+
     class connect : public command
     {
         public:

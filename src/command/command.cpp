@@ -26,17 +26,23 @@ namespace command
 
     void disconnect::validate( std::shared_ptr<network::client> client, const argument_list& arguments )
     {
-        if ( arguments.size() )
+        if ( arguments.size() > 1 )
             throw invalid_arguments("Usgae:\tdisconnect");
     }
 
 
-    void disconnect::execute( std::shared_ptr<network::client> client, const argument_list& arguments, bool& /* connected */ )
+    void disconnect::execute( std::shared_ptr<network::client> client, const argument_list& arguments, bool& connected )
     {
         if ( !client )
             throw std::runtime_error("Client is not connected");
-        network::log("Client disconnected from server");
-        m_server->get_disconnection( client->get_fd() );
+        if ( connected )
+        {
+            network::log("Client disconnected from server");
+            m_server->get_disconnection( client->get_fd() );
+        }
+        else
+            network::log("Client not connected to server");
+
     }
 
     shell::shell( std::shared_ptr<network::connection_socket> server )
@@ -124,7 +130,7 @@ namespace command
 
     void connect::validate( std::shared_ptr<network::client> client, const argument_list& arguments )
     {
-        if ( arguments.size() != 2 )
+        if ( arguments.size() != 3 )
             throw invalid_arguments("Usage:\tconnect <IP_ADDRESS> <PORT>");
     }
 
@@ -132,8 +138,32 @@ namespace command
     {
         if ( !client )
             throw std::runtime_error("Client is not connected to server");
-        m_server->connect( arguments[1], arguments[0] );
+        m_server->connect( arguments[2], arguments[1] );
         network::log("Client is connected to server");
+    }
+
+    cli_shell::cli_shell( std::shared_ptr<network::connection_socket> server )
+        :   command(server)
+    {}
+
+    void cli_shell::validate( std::shared_ptr<network::client> client, const argument_list& arguments )
+    {
+        if ( arguments.size() < 2 )
+            throw invalid_arguments("Usage:\tshell <cmd>");
+
+    }
+
+    void cli_shell::execute( std::shared_ptr<network::client> client, const argument_list& arguments, bool& connected )
+    {
+
+        if ( !client )
+            throw std::runtime_error("Client is not connected to server");
+        std::string command;
+        for ( auto& arg : arguments )
+            command += arg + std::string(" ");
+        client->reply( command, connected );
+        auto message = client->recieve( connected );
+        std::cout << message;
     }
 
 

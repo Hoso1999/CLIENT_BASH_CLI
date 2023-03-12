@@ -56,11 +56,12 @@ namespace command
                     }
                     catch ( const std::out_of_range& )
                     {
-                        client->reply( std::string("Command \"") + cmd + std::string("\" not supported\n") );
+                        bool connected = true;
+                        client->reply( std::string("Command \"") + cmd + std::string("\" not supported\n"), connected );
                     }
                     catch ( const std::exception& ex )
                     {
-                        client->reply( std::string( ex.what() ) );
+                        client->reply( std::string( ex.what() ), connected );
                     }
                 }
 
