@@ -20,6 +20,10 @@
 #include <poll.h>
 #include <cstdlib>
 #include <unistd.h>
+#ifdef OS_LINUX
+#include <sys/wait.h>
+#include <strings.h>
+#endif
 #include <exception>
 
 #ifdef MAX_CONNECTIONS
