@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 project(command_communication)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -7,6 +7,9 @@ set(CMAKE_BINARY_DIR "./build")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+if(UNIX AND NOT APPLE)
+	add_definitions(-DOS_LINUX)
+endif()
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -48,6 +51,3 @@ file(GLOB client_SRCS
 
 add_executable(server ${server_SRCS})
 add_executable(client ${client_SRCS})
-
-
-
