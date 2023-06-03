@@ -1,5 +1,7 @@
 # CLIENT_SHELL_CLI
 
+This project about create client-cli that can run shell commands in server and get output in client.
+
 # Usage
 
 ```bash
